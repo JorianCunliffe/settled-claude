@@ -1,0 +1,334 @@
+{
+  "name": "Standard Residential Sale",
+  "propertyType": "residential",
+  "version": 1,
+  "stages": [
+    {
+      "key": "onboarding",
+      "name": "Onboarding",
+      "description": "Complete your seller profile, sign the Form 6 appointment and secure your pre-sale finance facility.",
+      "ownerRole": "seller",
+      "dependsOn": [],
+      "expectedDurationDays": 3,
+      "gateConditions": [
+        {
+          "key": "form6_signed",
+          "description": "Form 6 (Appointment of Agent) signed by seller and countersigned by platform",
+          "requiredParty": "platform",
+          "type": "deliverable"
+        },
+        {
+          "key": "finance_approved",
+          "description": "Pre-sale finance facility approved by ListReady",
+          "requiredParty": "platform",
+          "type": "validation"
+        },
+        {
+          "key": "seller_onboarding_approved",
+          "description": "Seller confirms all onboarding information is correct",
+          "requiredParty": "seller",
+          "type": "approval"
+        }
+      ],
+      "costItems": [],
+      "revenueItems": [],
+      "actionText": {
+        "seller": "Sign your Form 6 and complete your finance application to get started",
+        "agent": "Awaiting seller onboarding — you will be matched once complete",
+        "platform_admin": "Review Form 6 countersign and finance approval",
+        "default": "Seller completing onboarding"
+      }
+    },
+    {
+      "key": "agent_selection",
+      "name": "Agent Assignment",
+      "description": "The platform matches and assigns your dedicated agent. Your agent signs the conjunction agreement and introduces themselves.",
+      "ownerRole": "platform_admin",
+      "dependsOn": ["onboarding"],
+      "expectedDurationDays": 2,
+      "gateConditions": [
+        {
+          "key": "conjunction_signed",
+          "description": "Conjunction agreement signed by agent and platform",
+          "requiredParty": "agent",
+          "type": "deliverable"
+        },
+        {
+          "key": "agent_intro_completed",
+          "description": "Agent introduction call or visit completed and noted",
+          "requiredParty": "platform_admin",
+          "type": "validation"
+        },
+        {
+          "key": "seller_agent_approved",
+          "description": "Seller approves the assigned agent and is ready to proceed",
+          "requiredParty": "seller",
+          "type": "approval"
+        }
+      ],
+      "costItems": [],
+      "revenueItems": [],
+      "actionText": {
+        "seller": "Review your matched agent and confirm you're ready to proceed",
+        "agent": "Sign your conjunction agreement and schedule your property introduction",
+        "platform_admin": "Match and assign agent; confirm introduction is complete",
+        "default": "Agent being assigned"
+      }
+    },
+    {
+      "key": "preparation",
+      "name": "Property Preparation",
+      "description": "Complete all pre-market improvements — repairs, cleaning, styling, and professional photography — to maximise appeal.",
+      "ownerRole": "agent",
+      "dependsOn": ["agent_selection"],
+      "expectedDurationDays": 14,
+      "gateConditions": [
+        {
+          "key": "improvements_complete",
+          "description": "All approved improvements completed and signed off by agent",
+          "requiredParty": "agent",
+          "type": "deliverable"
+        },
+        {
+          "key": "photography_complete",
+          "description": "Professional photography delivered and approved",
+          "requiredParty": "platform_admin",
+          "type": "validation"
+        },
+        {
+          "key": "seller_prep_approved",
+          "description": "Seller approves property is ready for marketing",
+          "requiredParty": "seller",
+          "type": "approval"
+        }
+      ],
+      "costItems": [
+        {
+          "key": "styling",
+          "label": "Property Styling",
+          "estimateLow": 1500,
+          "estimateHigh": 4000,
+          "payer": "seller",
+          "fromFacility": true
+        },
+        {
+          "key": "photography",
+          "label": "Professional Photography",
+          "estimateLow": 400,
+          "estimateHigh": 900,
+          "payer": "seller",
+          "fromFacility": true
+        },
+        {
+          "key": "repairs",
+          "label": "Minor Repairs & Maintenance",
+          "estimateLow": 500,
+          "estimateHigh": 3000,
+          "payer": "seller",
+          "fromFacility": true
+        },
+        {
+          "key": "cleaning",
+          "label": "Professional Cleaning",
+          "estimateLow": 300,
+          "estimateHigh": 800,
+          "payer": "seller",
+          "fromFacility": true
+        }
+      ],
+      "revenueItems": [],
+      "actionText": {
+        "seller": "Approve quotes and coordinate access for tradespeople and photographers",
+        "agent": "Coordinate all preparation works and confirm completion",
+        "platform_admin": "Validate photography and preparation completion",
+        "default": "Property preparation in progress"
+      }
+    },
+    {
+      "key": "off_market",
+      "name": "Off-Market Campaign",
+      "description": "Before going public, your property is matched to qualified buyers in the platform database. Sell fast with no marketing costs.",
+      "ownerRole": "agent",
+      "dependsOn": ["preparation"],
+      "expectedDurationDays": 14,
+      "gateConditions": [
+        {
+          "key": "buyer_matching_run",
+          "description": "Off-market buyer matching run and alerts sent",
+          "requiredParty": "agent",
+          "type": "deliverable"
+        },
+        {
+          "key": "off_market_inspections_complete",
+          "description": "Off-market inspection period completed (minimum 7 days)",
+          "requiredParty": "platform_admin",
+          "type": "validation"
+        },
+        {
+          "key": "seller_off_market_approved",
+          "description": "Seller reviews off-market results and decides whether to accept offer or proceed to on-market",
+          "requiredParty": "seller",
+          "type": "approval"
+        }
+      ],
+      "costItems": [],
+      "revenueItems": [
+        {
+          "key": "platform_referral",
+          "label": "Platform referral fee (off-market match)",
+          "estimateLow": 0,
+          "estimateHigh": 500,
+          "recipient": "platform"
+        }
+      ],
+      "actionText": {
+        "seller": "Review off-market interest and decide whether to accept an offer or proceed to public listing",
+        "agent": "Run buyer matching, schedule inspections, and report results to seller",
+        "platform_admin": "Monitor off-market campaign and validate inspection records",
+        "default": "Off-market buyer matching in progress"
+      }
+    },
+    {
+      "key": "on_market",
+      "name": "Public Listing",
+      "description": "Your property goes live on Domain and REA. Open homes, buyer enquiries, and active marketing campaign.",
+      "ownerRole": "agent",
+      "dependsOn": ["off_market"],
+      "expectedDurationDays": 28,
+      "gateConditions": [
+        {
+          "key": "listing_published",
+          "description": "Property listed on Domain and REA",
+          "requiredParty": "agent",
+          "type": "deliverable"
+        },
+        {
+          "key": "open_homes_scheduled",
+          "description": "Open home schedule confirmed and communicated",
+          "requiredParty": "platform_admin",
+          "type": "validation"
+        },
+        {
+          "key": "seller_ready_for_offers",
+          "description": "Seller confirms they are ready to consider offers",
+          "requiredParty": "seller",
+          "type": "approval"
+        }
+      ],
+      "costItems": [
+        {
+          "key": "marketing",
+          "label": "Marketing Package (Domain + REA)",
+          "estimateLow": 1500,
+          "estimateHigh": 5000,
+          "payer": "seller",
+          "fromFacility": true
+        }
+      ],
+      "revenueItems": [],
+      "actionText": {
+        "seller": "Review listing and approve it going live on Domain and REA",
+        "agent": "Publish listing, schedule open homes, manage buyer enquiries",
+        "platform_admin": "Validate listing quality and approve publication",
+        "default": "Public marketing campaign active"
+      }
+    },
+    {
+      "key": "offers_contracts",
+      "name": "Offers & Contracts",
+      "description": "Review offers, negotiate, and execute the Sale Contract. Cooling-off period begins upon signing.",
+      "ownerRole": "agent",
+      "dependsOn": ["on_market"],
+      "expectedDurationDays": 7,
+      "gateConditions": [
+        {
+          "key": "offer_accepted",
+          "description": "Offer formally accepted and Sale Contract sent for signing",
+          "requiredParty": "agent",
+          "type": "deliverable"
+        },
+        {
+          "key": "contract_signed",
+          "description": "Sale Contract signed by buyer and seller via DocuSign",
+          "requiredParty": "platform_admin",
+          "type": "validation"
+        },
+        {
+          "key": "seller_contract_approved",
+          "description": "Seller countersigns and approves the executed contract",
+          "requiredParty": "seller",
+          "type": "approval"
+        }
+      ],
+      "costItems": [],
+      "revenueItems": [
+        {
+          "key": "commission",
+          "label": "Commission (2.5% inc GST)",
+          "estimateLow": 15000,
+          "estimateHigh": 35000,
+          "recipient": "platform"
+        }
+      ],
+      "actionText": {
+        "seller": "Review offers with your agent and countersign the accepted contract",
+        "agent": "Present all offers, negotiate on seller's behalf, prepare contract",
+        "platform_admin": "Validate contract execution and initiate cooling-off tracking",
+        "default": "Offer and contract processing"
+      }
+    },
+    {
+      "key": "settlement",
+      "name": "Settlement",
+      "description": "Final settlement — transfer of title, release of deposit, repayment of finance facility, and distribution of proceeds.",
+      "ownerRole": "platform_admin",
+      "dependsOn": ["offers_contracts"],
+      "expectedDurationDays": 30,
+      "gateConditions": [
+        {
+          "key": "settlement_booked",
+          "description": "Settlement date confirmed with all parties and conveyancers",
+          "requiredParty": "agent",
+          "type": "deliverable"
+        },
+        {
+          "key": "settlement_funds_confirmed",
+          "description": "Settlement funds confirmed and reconciliation processed by platform",
+          "requiredParty": "platform_admin",
+          "type": "validation"
+        },
+        {
+          "key": "seller_settlement_approved",
+          "description": "Seller confirms receipt of net proceeds",
+          "requiredParty": "seller",
+          "type": "approval"
+        }
+      ],
+      "costItems": [
+        {
+          "key": "conveyancing",
+          "label": "Conveyancing (seller)",
+          "estimateLow": 1000,
+          "estimateHigh": 2500,
+          "payer": "seller",
+          "fromFacility": false
+        }
+      ],
+      "revenueItems": [
+        {
+          "key": "net_proceeds",
+          "label": "Net proceeds to seller",
+          "estimateLow": 450000,
+          "estimateHigh": 900000,
+          "recipient": "seller"
+        }
+      ],
+      "actionText": {
+        "seller": "Confirm settlement details with your conveyancer and await net proceeds",
+        "agent": "Coordinate with all parties to confirm settlement date",
+        "platform_admin": "Process settlement reconciliation and distribute proceeds",
+        "default": "Settlement in progress"
+      }
+    }
+  ]
+}

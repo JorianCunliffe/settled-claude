@@ -1,0 +1,370 @@
+{
+  "name": "Auction Campaign",
+  "propertyType": "residential_auction",
+  "version": 1,
+  "stages": [
+    {
+      "key": "onboarding",
+      "name": "Onboarding",
+      "description": "Complete your seller profile, sign the Form 6 appointment and secure your pre-sale finance facility.",
+      "ownerRole": "seller",
+      "dependsOn": [],
+      "expectedDurationDays": 3,
+      "gateConditions": [
+        {
+          "key": "form6_signed",
+          "description": "Form 6 (Appointment of Agent) signed by seller and countersigned by platform",
+          "requiredParty": "platform",
+          "type": "deliverable"
+        },
+        {
+          "key": "finance_approved",
+          "description": "Pre-sale finance facility approved by ListReady",
+          "requiredParty": "platform",
+          "type": "validation"
+        },
+        {
+          "key": "seller_onboarding_approved",
+          "description": "Seller confirms all onboarding information is correct",
+          "requiredParty": "seller",
+          "type": "approval"
+        }
+      ],
+      "costItems": [],
+      "revenueItems": [],
+      "actionText": {
+        "seller": "Sign your Form 6 and complete your finance application to get started",
+        "agent": "Awaiting seller onboarding — you will be matched once complete",
+        "platform_admin": "Review Form 6 countersign and finance approval",
+        "default": "Seller completing onboarding"
+      }
+    },
+    {
+      "key": "agent_selection",
+      "name": "Agent Assignment",
+      "description": "The platform matches and assigns your auction specialist agent. Conjunction agreement signed and strategy discussion held.",
+      "ownerRole": "platform_admin",
+      "dependsOn": ["onboarding"],
+      "expectedDurationDays": 2,
+      "gateConditions": [
+        {
+          "key": "conjunction_signed",
+          "description": "Conjunction agreement signed by agent and platform",
+          "requiredParty": "agent",
+          "type": "deliverable"
+        },
+        {
+          "key": "agent_intro_completed",
+          "description": "Agent introduction and auction strategy session completed",
+          "requiredParty": "platform_admin",
+          "type": "validation"
+        },
+        {
+          "key": "seller_agent_approved",
+          "description": "Seller approves the assigned auction agent and is ready to proceed",
+          "requiredParty": "seller",
+          "type": "approval"
+        }
+      ],
+      "costItems": [],
+      "revenueItems": [],
+      "actionText": {
+        "seller": "Review your matched auction agent and confirm you're ready to proceed",
+        "agent": "Sign your conjunction agreement and schedule your property introduction",
+        "platform_admin": "Match auction specialist; confirm introduction complete",
+        "default": "Auction agent being assigned"
+      }
+    },
+    {
+      "key": "preparation",
+      "name": "Property Preparation",
+      "description": "Complete all pre-auction improvements — repairs, cleaning, styling, and professional photography.",
+      "ownerRole": "agent",
+      "dependsOn": ["agent_selection"],
+      "expectedDurationDays": 14,
+      "gateConditions": [
+        {
+          "key": "improvements_complete",
+          "description": "All approved improvements completed and signed off by agent",
+          "requiredParty": "agent",
+          "type": "deliverable"
+        },
+        {
+          "key": "photography_complete",
+          "description": "Professional photography delivered and approved",
+          "requiredParty": "platform_admin",
+          "type": "validation"
+        },
+        {
+          "key": "seller_prep_approved",
+          "description": "Seller approves property is ready for marketing",
+          "requiredParty": "seller",
+          "type": "approval"
+        }
+      ],
+      "costItems": [
+        {
+          "key": "styling",
+          "label": "Property Styling",
+          "estimateLow": 1500,
+          "estimateHigh": 4000,
+          "payer": "seller",
+          "fromFacility": true
+        },
+        {
+          "key": "photography",
+          "label": "Professional Photography",
+          "estimateLow": 400,
+          "estimateHigh": 900,
+          "payer": "seller",
+          "fromFacility": true
+        },
+        {
+          "key": "repairs",
+          "label": "Minor Repairs & Maintenance",
+          "estimateLow": 500,
+          "estimateHigh": 3000,
+          "payer": "seller",
+          "fromFacility": true
+        },
+        {
+          "key": "cleaning",
+          "label": "Professional Cleaning",
+          "estimateLow": 300,
+          "estimateHigh": 800,
+          "payer": "seller",
+          "fromFacility": true
+        }
+      ],
+      "revenueItems": [],
+      "actionText": {
+        "seller": "Approve quotes and coordinate access for tradespeople and photographers",
+        "agent": "Coordinate all preparation works and confirm completion",
+        "platform_admin": "Validate photography and preparation completion",
+        "default": "Property preparation in progress"
+      }
+    },
+    {
+      "key": "appraisal_reserve",
+      "name": "Appraisal & Reserve Strategy",
+      "description": "Your agent provides a formal appraisal with comparable sales data. Together you set the auction reserve price.",
+      "ownerRole": "agent",
+      "dependsOn": ["preparation"],
+      "expectedDurationDays": 5,
+      "gateConditions": [
+        {
+          "key": "appraisal_delivered",
+          "description": "Formal appraisal report with comparable sales delivered",
+          "requiredParty": "agent",
+          "type": "deliverable"
+        },
+        {
+          "key": "reserve_validated",
+          "description": "Reserve price reviewed and signed off by platform",
+          "requiredParty": "platform_admin",
+          "type": "validation"
+        },
+        {
+          "key": "seller_reserve_approved",
+          "description": "Seller formally sets and approves the reserve price",
+          "requiredParty": "seller",
+          "type": "approval"
+        }
+      ],
+      "costItems": [],
+      "revenueItems": [],
+      "actionText": {
+        "seller": "Review the appraisal report and set your reserve price",
+        "agent": "Deliver formal appraisal with comparable sales and recommend a reserve",
+        "platform_admin": "Review reserve setting against market data",
+        "default": "Appraisal and reserve strategy in progress"
+      }
+    },
+    {
+      "key": "auction_campaign",
+      "name": "Auction Campaign",
+      "description": "Four-week marketing blitz — Domain, REA, social media, and open homes build competitive tension ahead of auction day.",
+      "ownerRole": "agent",
+      "dependsOn": ["appraisal_reserve"],
+      "expectedDurationDays": 28,
+      "gateConditions": [
+        {
+          "key": "auction_listing_published",
+          "description": "Auction listing live on Domain and REA with auction date",
+          "requiredParty": "agent",
+          "type": "deliverable"
+        },
+        {
+          "key": "open_homes_completed",
+          "description": "All scheduled open homes completed and buyer interest reported",
+          "requiredParty": "platform_admin",
+          "type": "validation"
+        },
+        {
+          "key": "seller_auction_ready",
+          "description": "Seller confirms they are prepared for auction day",
+          "requiredParty": "seller",
+          "type": "approval"
+        }
+      ],
+      "costItems": [
+        {
+          "key": "auction_marketing",
+          "label": "Auction Marketing Package",
+          "estimateLow": 2500,
+          "estimateHigh": 8000,
+          "payer": "seller",
+          "fromFacility": true
+        },
+        {
+          "key": "auctioneer_fee",
+          "label": "Auctioneer Fee",
+          "estimateLow": 500,
+          "estimateHigh": 1500,
+          "payer": "seller",
+          "fromFacility": true
+        }
+      ],
+      "revenueItems": [],
+      "actionText": {
+        "seller": "Attend open homes if desired and prepare for auction day",
+        "agent": "Drive the campaign — open homes, buyer follow-up, competitive tension",
+        "platform_admin": "Monitor campaign performance and buyer registration",
+        "default": "Auction campaign running"
+      }
+    },
+    {
+      "key": "auction_day",
+      "name": "Auction Day",
+      "description": "The auction is held. If sold under the hammer, contracts are exchanged on the day. If passed in, negotiate immediately.",
+      "ownerRole": "agent",
+      "dependsOn": ["auction_campaign"],
+      "expectedDurationDays": 1,
+      "gateConditions": [
+        {
+          "key": "auction_conducted",
+          "description": "Auction conducted — result recorded (sold, passed in, or withdrawn)",
+          "requiredParty": "agent",
+          "type": "deliverable"
+        },
+        {
+          "key": "result_validated",
+          "description": "Auction result validated by platform and contract initiated",
+          "requiredParty": "platform_admin",
+          "type": "validation"
+        },
+        {
+          "key": "seller_result_approved",
+          "description": "Seller confirms the auction outcome and authorises next steps",
+          "requiredParty": "seller",
+          "type": "approval"
+        }
+      ],
+      "costItems": [],
+      "revenueItems": [],
+      "actionText": {
+        "seller": "Attend the auction and confirm your decision on the result",
+        "agent": "Conduct the auction, negotiate if passed in, record outcome",
+        "platform_admin": "Record auction result and initiate contract process",
+        "default": "Auction day"
+      }
+    },
+    {
+      "key": "offers_contracts",
+      "name": "Contracts & Exchange",
+      "description": "Execute the Sale Contract — either on auction day (unconditional) or post-auction negotiation.",
+      "ownerRole": "agent",
+      "dependsOn": ["auction_day"],
+      "expectedDurationDays": 3,
+      "gateConditions": [
+        {
+          "key": "contract_prepared",
+          "description": "Sale Contract prepared and sent to all parties",
+          "requiredParty": "agent",
+          "type": "deliverable"
+        },
+        {
+          "key": "contract_signed",
+          "description": "Sale Contract signed by buyer and seller via DocuSign",
+          "requiredParty": "platform_admin",
+          "type": "validation"
+        },
+        {
+          "key": "seller_contract_approved",
+          "description": "Seller confirms the executed contract",
+          "requiredParty": "seller",
+          "type": "approval"
+        }
+      ],
+      "costItems": [],
+      "revenueItems": [
+        {
+          "key": "commission",
+          "label": "Commission (2.5% inc GST)",
+          "estimateLow": 15000,
+          "estimateHigh": 50000,
+          "recipient": "platform"
+        }
+      ],
+      "actionText": {
+        "seller": "Countersign the Sale Contract to complete the exchange",
+        "agent": "Prepare and execute the Sale Contract with buyer",
+        "platform_admin": "Validate contract execution and track deposit",
+        "default": "Contract and exchange in progress"
+      }
+    },
+    {
+      "key": "settlement",
+      "name": "Settlement",
+      "description": "Final settlement — transfer of title, release of deposit, repayment of finance facility, and distribution of proceeds.",
+      "ownerRole": "platform_admin",
+      "dependsOn": ["offers_contracts"],
+      "expectedDurationDays": 30,
+      "gateConditions": [
+        {
+          "key": "settlement_booked",
+          "description": "Settlement date confirmed with all parties and conveyancers",
+          "requiredParty": "agent",
+          "type": "deliverable"
+        },
+        {
+          "key": "settlement_funds_confirmed",
+          "description": "Settlement funds confirmed and reconciliation processed by platform",
+          "requiredParty": "platform_admin",
+          "type": "validation"
+        },
+        {
+          "key": "seller_settlement_approved",
+          "description": "Seller confirms receipt of net proceeds",
+          "requiredParty": "seller",
+          "type": "approval"
+        }
+      ],
+      "costItems": [
+        {
+          "key": "conveyancing",
+          "label": "Conveyancing (seller)",
+          "estimateLow": 1000,
+          "estimateHigh": 2500,
+          "payer": "seller",
+          "fromFacility": false
+        }
+      ],
+      "revenueItems": [
+        {
+          "key": "net_proceeds",
+          "label": "Net proceeds to seller",
+          "estimateLow": 450000,
+          "estimateHigh": 1500000,
+          "recipient": "seller"
+        }
+      ],
+      "actionText": {
+        "seller": "Confirm settlement details with your conveyancer and await net proceeds",
+        "agent": "Coordinate with all parties to confirm settlement date",
+        "platform_admin": "Process settlement reconciliation and distribute proceeds",
+        "default": "Settlement in progress"
+      }
+    }
+  ]
+}

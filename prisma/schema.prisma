@@ -1,0 +1,591 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum UserType {
+  seller
+  buyer
+  agent
+  org_admin
+  platform_admin
+  system
+}
+
+enum PropertyStatus {
+  draft
+  form6_pending
+  form6_signed
+  form6_declined
+  active
+  off_market
+  on_market
+  under_offer
+  sold
+  settled
+  withdrawn
+}
+
+enum ConjunctionStatus {
+  pending
+  sent
+  active
+  terminated
+}
+
+enum FacilityStatus {
+  pending
+  approved
+  declined
+  repaid
+}
+
+enum OfferStatus {
+  pending
+  accepted
+  rejected
+  withdrawn
+  countered
+}
+
+enum ContractStatus {
+  draft
+  sent
+  signed
+  terminated
+  settled
+}
+
+enum StageState {
+  locked
+  available
+  in_progress
+  awaiting
+  complete
+}
+
+enum DisputeStatus {
+  open
+  investigating
+  resolved
+  closed
+}
+
+enum ReferralStatus {
+  pending
+  qualified
+  settled
+  paid
+}
+
+// ─── Core ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  fullName  String
+  phone     String?
+  userType  UserType
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  properties   Property[]
+  agentProfile Agent?
+  buyerProfile BuyerProfile?
+
+  @@map("users")
+}
+
+model Property {
+  id                      String         @id @default(uuid())
+  sellerId                String
+  addressLine             String
+  suburb                  String
+  state                   String         @default("QLD")
+  postcode                String
+  propertyType            String         @default("residential")
+  bedrooms                Int?
+  bathrooms               Int?
+  carSpaces               Int?
+  landSqm                 Float?
+  lotPlan                 String?
+  form6RollingTermMonths  Int            @default(3)
+  form6DocusignEnvelopeId String?
+  form6SignedAt           DateTime?
+  status                  PropertyStatus @default(draft)
+  currentStage            Int            @default(1)
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+
+  seller          User             @relation(fields: [sellerId], references: [id])
+  conjunctions    Conjunction[]
+  appraisals      Appraisal[]
+  improvements    Improvement[]
+  listings        Listing[]
+  photos          Photo[]
+  offers          Offer[]
+  contracts       Contract[]
+  financeFacility  FinanceFacility?
+  propertyWorkflow PropertyWorkflow?
+
+  @@map("properties")
+}
+
+model Agency {
+  id        String   @id @default(uuid())
+  name      String
+  abn       String?
+  licenceNo String?
+  address   String?
+  phone     String?
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agents Agent[]
+
+  @@map("agencies")
+}
+
+model Agent {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  agencyId              String?
+  licenceNo             String?
+  specialisations       String[]
+  suburbs               String[]
+  maxConcurrentListings Int      @default(5)
+  firstDealUsed         Boolean  @default(false)
+  badgeActive           Boolean  @default(true)
+  scorecardScore        Float?
+  appraisalAccuracy     Float?
+  daysOnMarketRatio     Float?
+  sellerNpsAvg          Float?
+  conversionRate        Float?
+  offMarketRate         Float?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id])
+  agency       Agency?      @relation(fields: [agencyId], references: [id])
+  conjunctions Conjunction[]
+
+  @@map("agents")
+}
+
+// ─── Sale Process ─────────────────────────────────────────────────────────────
+
+model Conjunction {
+  id                 String            @id @default(uuid())
+  propertyId         String
+  agentId            String
+  status             ConjunctionStatus @default(pending)
+  commissionSharePct Float             @default(50)
+  isFirstDeal        Boolean           @default(false)
+  docusignEnvelopeId String?
+  signedAt           DateTime?
+  terminatedAt       DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id])
+  agent    Agent    @relation(fields: [agentId], references: [id])
+
+  @@map("conjunctions")
+}
+
+model Appraisal {
+  id           String   @id @default(uuid())
+  propertyId   String
+  agentId      String?
+  estimateLow  Float
+  estimateHigh Float
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id])
+
+  @@map("appraisals")
+}
+
+model Improvement {
+  id           String   @id @default(uuid())
+  propertyId   String
+  description  String
+  status       String   @default("pending")
+  estimateLow  Float?
+  estimateHigh Float?
+  actualCost   Float?
+  contractorId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  property   Property    @relation(fields: [propertyId], references: [id])
+  contractor Contractor? @relation(fields: [contractorId], references: [id])
+  quotes     Quote[]
+
+  @@map("improvements")
+}
+
+model Quote {
+  id            String   @id @default(uuid())
+  improvementId String
+  contractorId  String
+  amount        Float
+  status        String   @default("pending")
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  improvement Improvement @relation(fields: [improvementId], references: [id])
+  contractor  Contractor  @relation(fields: [contractorId], references: [id])
+
+  @@map("quotes")
+}
+
+model Contractor {
+  id        String   @id @default(uuid())
+  name      String
+  trade     String
+  email     String?
+  phone     String?
+  abn       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  improvements Improvement[]
+  quotes       Quote[]
+
+  @@map("contractors")
+}
+
+// ─── Finance ──────────────────────────────────────────────────────────────────
+
+model FinanceFacility {
+  id             String         @id @default(uuid())
+  propertyId     String         @unique
+  status         FacilityStatus @default(pending)
+  approvedAmount Float          @default(0)
+  drawnAmount    Float          @default(0)
+  interestRate   Float?
+  termMonths     Int?
+  approvedAt     DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  property  Property   @relation(fields: [propertyId], references: [id])
+  drawdowns Drawdown[]
+
+  @@map("finance_facilities")
+}
+
+model Drawdown {
+  id          String    @id @default(uuid())
+  facilityId  String
+  amount      Float
+  purpose     String
+  status      String    @default("pending")
+  approvedAt  DateTime?
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  facility FinanceFacility @relation(fields: [facilityId], references: [id])
+
+  @@map("drawdowns")
+}
+
+// ─── Listing & Sale ───────────────────────────────────────────────────────────
+
+model Listing {
+  id              String    @id @default(uuid())
+  propertyId      String
+  listPrice       Float?
+  priceDisplay    String?
+  headline        String?
+  description     String?
+  status          String    @default("draft")
+  publishedAt     DateTime?
+  domainListingId String?
+  reaListingId    String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id])
+
+  @@map("listings")
+}
+
+model Photo {
+  id         String   @id @default(uuid())
+  propertyId String
+  url        String
+  storageKey String
+  order      Int      @default(0)
+  caption    String?
+  createdAt  DateTime @default(now())
+
+  property Property @relation(fields: [propertyId], references: [id])
+
+  @@map("photos")
+}
+
+model Offer {
+  id         String      @id @default(uuid())
+  propertyId String
+  buyerId    String
+  amount     Float
+  conditions String?
+  status     OfferStatus @default(pending)
+  expiresAt  DateTime?
+  acceptedAt DateTime?
+  rejectedAt DateTime?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  property Property  @relation(fields: [propertyId], references: [id])
+  contract Contract?
+
+  @@map("offers")
+}
+
+model Contract {
+  id                 String         @id @default(uuid())
+  propertyId         String
+  offerId            String?        @unique
+  status             ContractStatus @default(draft)
+  salePrice          Float
+  depositAmount      Float?
+  settlementDate     DateTime?
+  coolingOffEnd      DateTime?
+  docusignEnvelopeId String?
+  signedAt           DateTime?
+  signedPdfUrl       String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id])
+  offer    Offer?   @relation(fields: [offerId], references: [id])
+
+  @@map("contracts")
+}
+
+// ─── Quality & Feedback ───────────────────────────────────────────────────────
+
+model StageGate {
+  id                  String    @id @default(uuid())
+  propertyWorkflowId  String
+  stageKey            String
+  agentDelivered      Boolean   @default(false)
+  platformValidated   Boolean   @default(false)
+  sellerApproved      Boolean   @default(false)
+  agentDeliveredAt    DateTime?
+  platformValidatedAt DateTime?
+  sellerApprovedAt    DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  propertyWorkflow PropertyWorkflow @relation(fields: [propertyWorkflowId], references: [id])
+
+  @@unique([propertyWorkflowId, stageKey])
+  @@map("stage_gates")
+}
+
+model StageFeedback {
+  id                 String   @id @default(uuid())
+  propertyWorkflowId String
+  stageKey           String
+  reviewerId         String
+  rating             Int
+  comment            String?
+  createdAt          DateTime @default(now())
+
+  propertyWorkflow PropertyWorkflow @relation(fields: [propertyWorkflowId], references: [id])
+
+  @@map("stage_feedback")
+}
+
+model Dispute {
+  id                 String        @id @default(uuid())
+  propertyWorkflowId String
+  stageKey           String?
+  raisedById         String
+  description        String
+  status             DisputeStatus @default(open)
+  resolution         String?
+  resolvedAt         DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  propertyWorkflow PropertyWorkflow @relation(fields: [propertyWorkflowId], references: [id])
+
+  @@map("disputes")
+}
+
+// ─── Growth Engine ────────────────────────────────────────────────────────────
+
+model BuyerProfile {
+  id             String    @id @default(uuid())
+  userId         String    @unique
+  organisationId String?
+  propertyTypes  String[]
+  suburbs        String[]
+  budgetMin      Float?
+  budgetMax      Float?
+  timeline       String?
+  isPublicSub    Boolean   @default(false)
+  subExpiresAt   DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id])
+  organisation Organisation? @relation(fields: [organisationId], references: [id])
+  referrals    Referral[]
+
+  @@map("buyer_profiles")
+}
+
+model Organisation {
+  id                  String   @id @default(uuid())
+  name                String
+  slug                String   @unique
+  contactEmail        String
+  commissionStructure Json     @default("{}")
+  aggregationFloor    Int      @default(5)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  buyerProfiles BuyerProfile[]
+  referrals     Referral[]
+
+  @@map("organisations")
+}
+
+model Referral {
+  id             String        @id @default(uuid())
+  organisationId String
+  buyerProfileId String?
+  propertyId     String?
+  status         ReferralStatus @default(pending)
+  feeAmount      Float?
+  paidAt         DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  organisation Organisation  @relation(fields: [organisationId], references: [id])
+  buyerProfile BuyerProfile? @relation(fields: [buyerProfileId], references: [id])
+
+  @@map("referrals")
+}
+
+// ─── Workflow Engine ──────────────────────────────────────────────────────────
+
+model WorkflowDefinition {
+  id           String    @id @default(uuid())
+  name         String
+  propertyType String
+  version      Int
+  status       String    @default("draft")
+  definition   Json
+  publishedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  propertyWorkflows PropertyWorkflow[]
+
+  @@unique([propertyType, version])
+  @@map("workflow_definitions")
+}
+
+model PropertyWorkflow {
+  id                   String    @id @default(uuid())
+  propertyId           String    @unique
+  workflowDefinitionId String
+  currentStageKey      String
+  startedAt            DateTime  @default(now())
+  completedAt          DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  property           Property           @relation(fields: [propertyId], references: [id])
+  workflowDefinition WorkflowDefinition @relation(fields: [workflowDefinitionId], references: [id])
+  stageProgress      StageProgress[]
+  stageGates         StageGate[]
+  stageFeedback      StageFeedback[]
+  disputes           Dispute[]
+
+  @@map("property_workflows")
+}
+
+model StageProgress {
+  id                 String     @id @default(uuid())
+  propertyWorkflowId String
+  stageKey           String
+  state              StageState @default(locked)
+  actualCost         Float      @default(0)
+  actualRevenue      Float      @default(0)
+  startedAt          DateTime?
+  completedAt        DateTime?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  propertyWorkflow PropertyWorkflow @relation(fields: [propertyWorkflowId], references: [id])
+
+  @@unique([propertyWorkflowId, stageKey])
+  @@map("stage_progress")
+}
+
+// ─── System ───────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  entityType String
+  entityId   String
+  action     String
+  changes    Json?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@map("audit_logs")
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  type      String
+  title     String
+  body      String
+  read      Boolean   @default(false)
+  readAt    DateTime?
+  metadata  Json?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+model WebhookLog {
+  id          String    @id @default(uuid())
+  source      String
+  payloadHash String
+  eventType   String?
+  entityId    String?
+  processed   Boolean   @default(false)
+  processedAt DateTime?
+  error       String?
+  createdAt   DateTime  @default(now())
+
+  @@unique([source, payloadHash])
+  @@map("webhook_logs")
+}
